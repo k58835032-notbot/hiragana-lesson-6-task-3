@@ -148,9 +148,21 @@ function getRandom50(sourceArray) {
 }
 
 /* ========== quiz state ========== */
-let quiz = getRandom50(allQuestions); // the set used this run (50 random)
+/* ========== quiz state ========== */
+let quiz = getRandom50(baseQuestions); // <-- fixed
 let idx = 0;
 let score = 0;
+
+/* ... middle of code ... */
+
+/* ========== restart logic ========== */
+restartBtn.addEventListener('click', () => {
+  quiz = getRandom50(baseQuestions); // <-- fixed
+  idx = 0;
+  score = 0;
+  renderQuestion();
+});
+
 
 /* ========== UI refs ========== */
 const qnumEl = document.getElementById('qnum');

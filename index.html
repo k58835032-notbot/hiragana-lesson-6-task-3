@@ -1,103 +1,58 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Romaji → Hiragana Quiz</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Romaji → Hiragana Quiz — Fixed</title>
 <style>
-  body{
-    font-family:"Hiragino Kaku Gothic Pro","Meiryo",sans-serif;
-    background:#fff;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    padding:40px;
-    text-align:center;
-  }
-  h1{color:#b23b3b;font-size:2em;margin-bottom:20px;}
-  #quiz-container{
-    background:#fff;border-radius:15px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.15);
-    padding:30px;width:90%;max-width:500px;
-  }
-  .question{font-size:2.2em;margin-bottom:25px;}
-  .option{
-    display:block;background:#ffeaea;border:none;
-    border-radius:10px;padding:12px;font-size:1.3em;
-    width:100%;max-width:300px;margin:10px auto;cursor:pointer;
-    transition:background-color .2s;
-  }
-  .option:hover{background:#f7b6b6;}
-  #message{margin-top:20px;font-weight:bold;font-size:1.2em;}
-  #next{
-    display:none;margin-top:25px;background:#b23b3b;
-    color:white;border:none;border-radius:10px;
-    padding:10px 20px;font-size:1.1em;cursor:pointer;
-  }
-  #next:hover{background:#a03030;}
+  :root{--accent:#b23b3b}
+  body{font-family: "Meiryo", "Hiragino Kaku Gothic Pro",sans-serif;margin:0;padding:28px;background:#fff;color:#222;display:flex;justify-content:center;}
+  .card{width:100%;max-width:720px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:28px;text-align:center;}
+  h1{color:var(--accent);margin:0 0 8px;}
+  #qnum{color:#666;margin-bottom:6px;}
+  #romaji{font-size:2.0rem;margin:18px 0;}
+  .choices{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
+  .choice-btn{background:#ffeaea;border:2px solid transparent;border-radius:10px;padding:12px 16px;font-size:1.1rem;cursor:pointer;transition:all .12s;width:100%;}
+  .choice-btn:hover{background:#f7b6b6}
+  .correct{background:#dff0d8;border-color:#9ad59a}
+  .wrong{background:#ffd6d6;border-color:#f1a0a0}
+  #feedback{margin-top:14px;font-weight:600;min-height:26px;}
+  #nav{margin-top:16px;display:flex;gap:12px;justify-content:center}
+  button.primary{background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer}
+  button:disabled{opacity:.6;cursor:not-allowed}
 </style>
 </head>
 <body>
+  <div class="card">
+    <h1>Romaji → Hiragana Quiz</h1>
+    <div id="qnum"></div>
+    <div id="romaji" aria-live="polite"></div>
 
-<h1>Romaji → Hiragana Quiz</h1>
+    <div class="choices" id="choices"></div>
 
-<div id="quiz-container">
-  <div id="question-number"></div>
-  <div class="question" id="question"></div>
-  <div id="options"></div>
-  <div id="message"></div>
-  <button id="next">Next</button>
-</div>
+    <div id="feedback" aria-live="polite"></div>
+
+    <div id="nav">
+      <button id="nextBtn" class="primary" disabled>Next</button>
+      <button id="restartBtn" style="display:none">Restart Quiz</button>
+    </div>
+  </div>
 
 <script>
-const baseQuestions = [
-  {r:"nana",h:"なな"},
-  {r:"onaka",h:"おなか"},
-  {r:"naka",h:"なか"},
-  {r:"nani",h:"なに"},
-  {r:"nan",h:"なん"},
-  {r:"nanika",h:"なにか"},
-  {r:"nanka",h:"なんか"},
-  {r:"naku",h:"なく"},
-  {r:"naze",h:"なぜ"},
-  {r:"ninau",h:"になう"},
-  {r:"nikki",h:"にっき"},
-  {r:"ninki",h:"にんき"},
-  {r:"ani",h:"あに"},
-  {r:"oni",h:"おに"},
-  {r:"kuni",h:"くに"},
-  {r:"san",h:"さん"},
-  {r:"sakana",h:"さかな"},
-  {r:"sannin",h:"さんにん"},
-  {r:"inu",h:"いぬ"},
-  {r:"neko",h:"ねこ"},
-  {r:"nokosu",h:"のこす"},
-  {r:"kinoko",h:"きのこ"},
-  {r:"denki",h:"でんき"},
-  {r:"tenki",h:"てんき"},
-  {r:"anshin",h:"あんしん"},
-  {r:"tanoshii",h:"たのしい"},
-  {r:"negai",h:"ねがい"},
-  {r:"jinsei",h:"じんせい"},
-  {r:"nagai",h:"ながい"},
+/* ========== PLACE YOUR MASTER ARRAY HERE ==========
 
-  {r:"sakka",h:"さっか"},
-  {r:"saka",h:"さか"},
-  {r:"sanka",h:"さんか"},
-  {r:"gakki",h:"がっき"},
-  {r:"kakkoku",h:"かっこく"},
-  {r:"kitte kudasai",h:"きってください"},
-  {r:"katta",h:"かった"},
-  {r:"gaki",h:"がき"},
-  {r:"kakoku",h:"かこく"},
-  {r:"kite kudasai",h:"きてください"},
-  {r:"kata",h:"かた"},
-  {r:"iku",h:"いく"},
+   Use this format for every object:
+   { q: "romaji", options: ["ひとつ","ふたつ","...","correct"], correct: "correct" }
+
+   Example small sample (replace this with your 84-item array):
+*/
 const baseQuestions = [
 { q:"nana", options:["なな","なっな","ななあ","なた"], correct:"なな" },
 { q:"onaka", options:["おなか","おがか","おなが","おなかあ"], correct:"おなか" },
 { q:"naka", options:["なか","なが","なかあ","なっか"], correct:"なか" },
 { q:"nani", options:["なに","なにい","なぎ","なにゃ"], correct:"なに" },
+{ q:"nan", options:["なん","なっん","なんん","なんあ"], correct:"なん" },
+{ q:"nanika", options:["なにか","なにが","なっにか","なにかあ"], correct:"なにか" },
 { q:"nanka", options:["なんか","なんが","なっか","なんかあ"], correct:"なんか" },
 { q:"naku", options:["なく","なぐ","なっく","なくう"], correct:"なく" },
 { q:"naze", options:["なぜ","なげ","なっぜ","なず"], correct:"なぜ" },
@@ -135,6 +90,7 @@ const baseQuestions = [
 { q:"kata", options:["かた","がた","かだ","かった"], correct:"かた" },
 { q:"iku", options:["いく","いっく","いぐ","いくう"], correct:"いく" },
 { q:"ku", options:["く","ぐ","くう","っく"], correct:"く" },
+
 { q:"zokugo", options:["ぞくご","ぞぐご","ぞっご","そくご"], correct:"ぞくご" },
 { q:"sushi", options:["すし","ずし","すじ","すっし"], correct:"すし" },
 { q:"okashi", options:["おかし","おがし","おかじ","おっかし"], correct:"おかし" },
@@ -152,6 +108,7 @@ const baseQuestions = [
 { q:"sekai", options:["せかい","せがい","せかあい","せっかい"], correct:"せかい" },
 { q:"isu", options:["いす","いず","いっす","いすう"], correct:"いす" },
 { q:"osu", options:["おす","おず","おっす","おすう"], correct:"おす" },
+
 { q:"ai", options:["あい","あぃ","あいー","あぎ"], correct:"あい" },
 { q:"ie", options:["いえ","いぇ","いへ","いぃえ"], correct:"いえ" },
 { q:"ue", options:["うえ","うぇ","うへ","うええ"], correct:"うえ" },
@@ -179,113 +136,117 @@ const baseQuestions = [
 { q:"ii", options:["いい","いーい","いぃい","いっい"], correct:"いい" },
 ];
 
-// returns a new shuffled 50 each time
-function getRandom50() {
-  return [...allQuestions]
-    .sort(()=>Math.random()-0.5)
-    .slice(0,50);
+
+/* ========== helper: pick random 50 (or fewer if less than 50) ========== */
+function getRandom50(sourceArray) {
+  const copy = sourceArray.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, Math.min(50, copy.length));
 }
 
+/* ========== quiz state ========== */
+let quiz = getRandom50(allQuestions); // the set used this run (50 random)
+let idx = 0;
 let score = 0;
-let currentQuestion = 0;
 
+/* ========== UI refs ========== */
+const qnumEl = document.getElementById('qnum');
+const romajiEl = document.getElementById('romaji');
+const choicesEl = document.getElementById('choices');
+const feedbackEl = document.getElementById('feedback');
+const nextBtn = document.getElementById('nextBtn');
+const restartBtn = document.getElementById('restartBtn');
 
-const questionEl = document.getElementById("question");
-const optionsEl = document.getElementById("options");
-const messageEl = document.getElementById("message");
-const nextBtn = document.getElementById("next");
-const questionNumberEl = document.getElementById("question-number");
-
-function showQuestion() {
-  const q = baseQuestions[currentQuestion];
-  questionNumberEl.textContent = `Question ${currentQuestion + 1} of ${baseQuestions.length}`;
-  questionEl.textContent = q.q;
-  optionsEl.innerHTML = "";
-  messageEl.textContent = "";
+/* ========== render one question ========== */
+function renderQuestion() {
+  feedbackEl.textContent = "";
+  nextBtn.disabled = true;
   nextBtn.style.display = "none";
+  restartBtn.style.display = "none";
 
-  q.options.forEach(option => {
-    const btn = document.createElement("button");
-    btn.textContent = option;
-    btn.classList.add("option");
-    btn.onclick = () => checkAnswer(option);
-    optionsEl.appendChild(btn);
+  if (idx >= quiz.length) {
+    showResults();
+    return;
+  }
+
+  const item = quiz[idx];
+  qnumEl.textContent = `Question ${idx + 1} / ${quiz.length}`;
+  romajiEl.textContent = item.q;
+  choicesEl.innerHTML = "";
+
+  // ensure options array has 4 unique items (if user stores only 1 correct + 3 distractors it's fine)
+  const uniq = Array.from(new Set(item.options.slice(0,4)));
+  while (uniq.length < 4) uniq.push(item.correct + "ー"); // fallback
+
+  // shuffle options
+  for (let i = uniq.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [uniq[i], uniq[j]] = [uniq[j], uniq[i]];
+  }
+
+  uniq.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = opt;
+    btn.type = 'button';
+    btn.addEventListener('click', () => handleChoice(btn, opt, item));
+    choicesEl.appendChild(btn);
   });
 }
-function checkAnswer(selected) {
-  const q = baseQuestions[currentQuestion];
-  const buttons = document.querySelectorAll(".option");
 
-  buttons.forEach(btn => {
-    btn.disabled = true;
-    if (btn.textContent === q.correct) {
-      btn.style.backgroundColor = "#b2e6b2";
-    }
-    if (btn.textContent === selected && selected !== q.correct) {
-      btn.style.backgroundColor = "#f7b6b6";
-    }
+/* ========== handle an answer click ========== */
+function handleChoice(button, chosen, item) {
+  // disable all
+  const buttons = Array.from(document.querySelectorAll('.choice-btn'));
+  buttons.forEach(b => b.disabled = true);
+
+  // mark correct and chosen
+  buttons.forEach(b => {
+    if (b.textContent === item.correct) b.classList.add('correct');
+    if (b === button && b.textContent !== item.correct) b.classList.add('wrong');
   });
 
-  if (selected === q.correct) {
+  if (chosen === item.correct) {
+    feedbackEl.textContent = "✅ Correct!";
     score++;
-    messageEl.textContent = "✅ Correct!";
-    messageEl.style.color = "#2e7d32";
   } else {
-    messageEl.textContent = `❌ Wrong! Correct answer: ${q.correct}`;
-    messageEl.style.color = "#b23b3b";
+    feedbackEl.textContent = `❌ Wrong — correct: ${item.correct}`;
   }
 
   nextBtn.style.display = "inline-block";
+  nextBtn.disabled = false;
 }
-nextBtn.addEventListener("click", () => {
-  currentQuestion++;
-  if (currentQuestion < baseQuestions.length) {
-    showQuestion();
-  } else {
-    showResults();
-  }
+
+/* ========== next button ========== */
+nextBtn.addEventListener('click', () => {
+  idx++;
+  renderQuestion();
 });
 
+/* ========== show final results ========== */
 function showResults() {
-  questionNumberEl.textContent = "";
-  questionEl.textContent = "Quiz Complete!";
-  optionsEl.innerHTML = "";
+  qnumEl.textContent = "";
+  romajiEl.textContent = "Quiz complete!";
+  choicesEl.innerHTML = "";
   nextBtn.style.display = "none";
+  feedbackEl.textContent = `Your score: ${score} / ${quiz.length}`;
 
-  messageEl.textContent = `Your score: ${score} / ${baseQuestions.length}`;
-  messageEl.style.color = "#333";
-
-  const img = document.createElement("img");
-  img.id = "result-gif";
-  const motivation = document.createElement("div");
-  motivation.id = "motivation";
-const lowGif = "https://raw.githubusercontent.com/k58835032-notbot/hiragana-lesson-3-reading/main/sad%20(1).gif";
-  const midGif = "https://raw.githubusercontent.com/k58835032-notbot/hiragana-lesson-3-reading/9dfe4e3c0835a43c673a94f82005d873295632c4/peach-goma.gif";
-  const highGif = "https://raw.githubusercontent.com/k58835032-notbot/hiragana-lesson-3-reading/aa252ee2e91e02c223f7e9151aa64f9abe7700e4/peach-goma-peach-and-goma.gif";
-
-  if (score <= 8) {
-    img.src = lowGif;
-    motivation.textContent = "Keep going! Practice makes perfect 💪";
-  } else if (score <= 16) {
-    img.src = midGif;
-    motivation.textContent = "Good job! You're improving fast 🌸";
-  } else {
-    img.src = highGif;
-    motivation.textContent = "Amazing! You're a Hiragana master 🎉";
-  }
-
-  optionsEl.appendChild(img);
-  optionsEl.appendChild(motivation);
-
-  const restartBtn = document.createElement("button");
-  restartBtn.textContent = "Restart Quiz";
-  restartBtn.id = "next";
-  restartBtn.onclick = () => location.reload();
-  optionsEl.appendChild(restartBtn);
+  restartBtn.style.display = "inline-block";
 }
 
-// ✅ Start quiz on page load
-showQuestion();
+/* ========== restart logic ========== */
+restartBtn.addEventListener('click', () => {
+  quiz = getRandom50(allQuestions);
+  idx = 0;
+  score = 0;
+  renderQuestion();
+});
+
+/* ========== start ========== */
+renderQuestion();
 </script>
 </body>
 </html>

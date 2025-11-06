@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Lesson-6-task-3</title>
+    
+
+  </head>
+    
+  <body>
+  <!doctype html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="utf-8" />
+
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<title>Romaji → Hiragana Quiz — Fixed</title>
+
+<style>
+
+  :root{--accent:#b23b3b}
+
+  body{font-family: "Meiryo","Hiragino Kaku Gothic Pro",sans-serif;margin:0;padding:28px;background:#fff;color:#222;display:flex;justify-content:center;}
+
+  .card{width:100%;max-width:720px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:28px;text-align:center;}
+
+  h1{color:var(--accent);margin:0 0 8px;}
+
+  #qnum{color:#666;margin-bottom:6px;}
+
+  #romaji{font-size:2.0rem;margin:18px 0;}
+
+  .choices{display:flex;flex-direction:column;gap:10px;margin-top:12px;}
+
+  .choice-btn{background:#ffeaea;border:2px solid transparent;border-radius:10px;padding:12px 16px;font-size:1.1rem;cursor:pointer;transition:all .12s;width:100%;}
+
+  .choice-btn:hover{background:#f7b6b6}
+
+  .correct{background:#dff0d8;border-color:#9ad59a}
+
+  .wrong{background:#ffd6d6;border-color:#f1a0a0}
+
+  #feedback{margin-top:14px;font-weight:600;min-height:26px;}
+
+  #nav{margin-top:16px;display:flex;gap:12px;justify-content:center}
+
+  button.primary{background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer}
+
+  button:disabled{opacity:.6;cursor:not-allowed}
+
+</style>
+
+</head>
+
+<body>
+
+  <div class="card">
+
+    <h1>Romaji → Hiragana Quiz</h1>
+
+    <div id="qnum"></div>
+
+    <div id="romaji" aria-live="polite"></div>
+
+    <div class="choices" id="choices"></div>
+
+    <div id="feedback" aria-live="polite"></div>
+
+    <div id="nav">
+
+      <button id="nextBtn" class="primary" style="display:none" disabled>Next</button>
+
+      <button id="restartBtn" style="display:none">Restart Quiz</button>
+
+    </div>
+
+  </div>
+
+<script>
+
+/* ========== MASTER LIST (85 items) ========== */
+
+const baseQuestions = [
+
+{ q:"nana", options:["なな","なっな","ななあ","なた"], correct:"なな" },
+
+{ q:"onaka", options:["おなか","おがか","おなが","おなかあ"], correct:"おなか" },
+
+{ q:"naka", options:["なか","なが","なかあ","なっか"], correct:"なか" },
+
+{ q:"nani", options:["なに","なにい","なぎ","なにゃ"], correct:"なに" },
+
+{ q:"nan", options:["なん","なっん","なんん","なんあ"], correct:"なん" },
+
+{ q:"nanika", options:["なにか","なにが","なっにか","なにかあ"], correct:"なにか" },
+
+{ q:"nanka", options:["なんか","なんが","なっか","なんかあ"], correct:"なんか" },
+
+{ q:"naku", options:["なく","なぐ","なっく","なくう"], correct:"なく" },
+
+{ q:"naze", options:["なぜ","なげ","なっぜ","なず"], correct:"なぜ" },
+
+{ q:"ninau", options:["になう","にがう","みなう","になうう"], correct:"になう" },
+
+{ q:"nikki", options:["にっき","にき","にっぎ","にっきい"], correct:"にっき" },
+
+{ q:"ninki", options:["にんき","にっき","にんぎ","なんき"], correct:"にんき" },
+
+{ q:"ani", options:["あに","あぎ","あにい","あっに"], correct:"あに" },
+
+{ q:"oni", options:["おに","おぎ","おにい","おっに"], correct:"おに" },
+
+{ q:"kuni", options:["くに","ぐに","くぎ","くね"], correct:"くに" },
+
+{ q:"san", options:["さん","さあん","ざん","さんん"], correct:"さん" },
+
+{ q:"sakana", options:["さかな","さがな","ざかな","さっかな"], correct:"さかな" },
+
+{ q:"sannin", options:["さんにん","さにん","さっにん","さんねん"], correct:"さんにん" },
+
+{ q:"inu", options:["いぬ","いぐ","いっぬ","いぬう"], correct:"いぬ" },
+
+{ q:"neko", options:["ねこ","ねご","ねっこ","ぬこ"], correct:"ねこ" },
+
+{ q:"nokosu", options:["のこす","のごす","のっこす","のこず"], correct:"のこす" },
+
+{ q:"kinoko", options:["きのこ","ぎのこ","きっのこ","きのご"], correct:"きのこ" },
+
+{ q:"denki", options:["でんき","でぬき","でっき","でんぎ"], correct:"でんき" },
+
+{ q:"tenki", options:["てんき","てっき","てんぎ","てにき"], correct:"てんき" },
+
+{ q:"anshin", options:["あんしん","あんじん","あっしん","あしん"], correct:"あんしん" },
+
+{ q:"tanoshii", options:["たのしい","たのしー","たっのしい","たのじい"], correct:"たのしい" },
+
+{ q:"negai", options:["ねがい","ねかい","ねがあい","ねっがい"], correct:"ねがい" },
+
+{ q:"jinsei", options:["じんせい","じんせー","じんせいい","じっせい"], correct:"じんせい" },
+
+{ q:"nagai", options:["ながい","なかい","ながあい","なっがい"], correct:"ながい" },
+
+{ q:"sakka", options:["さっか","さか","ざっか","さっが"], correct:"さっか" },
+
+{ q:"saka", options:["さか","さっか","ざか","さかあ"], correct:"さか" },
+
+{ q:"sanka", options:["さんか","さっか","ざんか","さんが"], correct:"さんか" },
+
+{ q:"gakki", options:["がっき","がき","がっぎ","かっき"], correct:"がっき" },
+
+{ q:"kakkoku", options:["かっこく","がっこく","かんこく","かぐこく"], correct:"かっこく" },
+
+{ q:"kitte kudasai", options:["きってください","きてください","きっでください","きってくだい"], correct:"きってください" },
+
+{ q:"katta", options:["かった","かた","がった","かったあ"], correct:"かった" },
+
+{ q:"gaki", options:["がき","がぎ","がっき","かき"], correct:"がき" },
+
+{ q:"kakoku", options:["かこく","がこく","かっこく","かこぐ"], correct:"かこく" },
+
+{ q:"kite kudasai", options:["きてください","きってください","きでください","きてくだい"], correct:"きてください" },
+
+{ q:"kata", options:["かた","がた","かだ","かった"], correct:"かた" },
+
+{ q:"iku", options:["いく","いっく","いぐ","いくう"], correct:"いく" },
+
+{ q:"ku", options:["く","ぐ","くう","っく"], correct:"く" },
+
+{ q:"zokugo", options:["ぞくご","ぞぐご","ぞっご","そくご"], correct:"ぞくご" },
+
+{ q:"sushi", options:["すし","ずし","すじ","すっし"], correct:"すし" },
+
+{ q:"okashi", options:["おかし","おがし","おかじ","おっかし"], correct:"おかし" },
+
+{ q:"okashii", options:["おかしい","おかしー","おっかしい","おがしい"], correct:"おかしい" },
+
+{ q:"ashi", options:["あし","あじ","あち","あっし"], correct:"あし" },
+
+{ q:"oishii", options:["おいしい","おいしー","おっいしい","おいじい"], correct:"おいしい" },
+
+{ q:"kasa", options:["かさ","がさ","かっさ","かざ"], correct:"かさ" },
+
+{ q:"esa", options:["えさ","えざ","えっさ","えさあ"], correct:"えさ" },
+
+{ q:"kazoku", options:["かぞく","かそく","かっぞく","かぞっく"], correct:"かぞく" },
+
+{ q:"kaze", options:["かぜ","かで","がぜ","かっぜ"], correct:"かぜ" },
+
+{ q:"kaji", options:["かじ","がじ","かぢ","かっじ"], correct:"かじ" },
+
+{ q:"kazu", options:["かず","がず","かっず","かす"], correct:"かず" },
+
+{ q:"goji", options:["ごじ","こじ","ごぢ","ごっじ"], correct:"ごじ" },
+
+{ q:"aji", options:["あじ","あし","あぢ","あっじ"], correct:"あじ" },
+
+{ q:"sekai", options:["せかい","せがい","せかあい","せっかい"], correct:"せかい" },
+
+{ q:"isu", options:["いす","いず","いっす","いすう"], correct:"いす" },
+
+{ q:"osu", options:["おす","おず","おっす","おすう"], correct:"おす" },
+
+{ q:"ai", options:["あい","あぃ","あいー","あぎ"], correct:"あい" },
+
+{ q:"ie", options:["いえ","いぇ","いへ","いぃえ"], correct:"いえ" },
+
+{ q:"ue", options:["うえ","うぇ","うへ","うええ"], correct:"うえ" },
+
+{ q:"aoi", options:["あおい","あおーい","あおぃ","あおっい"], correct:"あおい" },
+
+{ q:"au", options:["あう","あぅ","あうう","あっう"], correct:"あう" },
+
+{ q:"ekaku", options:["えかく","えがく","えっかく","えかぐ"], correct:"えかく" },
+
+{ q:"kaigi", options:["かいぎ","かいき","がいぎ","かいぎい"], correct:"かいぎ" },
+
+{ q:"kiku", options:["きく","ぎく","きっく","きくう"], correct:"きく" },
+
+{ q:"ikaga", options:["いかが","いかか","いかぎ","いっかが"], correct:"いかが" },
+
+{ q:"kagi", options:["かぎ","かぎい","かぎー","がぎ"], correct:"かぎ" },
+
+{ q:"gikai", options:["ぎかい","きかい","ぎがい","ぎかあい"], correct:"ぎかい" },
+
+{ q:"goi", options:["ごい","こい","ごぃ","ごいー"], correct:"ごい" },
+
+{ q:"gogaku", options:["ごがく","こがく","ごがっく","ごかく"], correct:"ごがく" },
+
+{ q:"igai", options:["いがい","いかい","いがあい","いっがい"], correct:"いがい" },
+
+{ q:"ugoki", options:["うごき","うこき","うごぎ","うっごき"], correct:"うごき" },
+
+{ q:"gogo", options:["ごご","こご","ごっご","ごごー"], correct:"ごご" },
+
+{ q:"egao", options:["えがお","えがを","えかお","えがおう"], correct:"えがお" },
+
+{ q:"eiga", options:["えいが","えいか","えいがあ","えっいが"], correct:"えいが" },
+
+{ q:"eigo", options:["えいご","えいこ","えいごう","えっいご"], correct:"えいご" },
+
+{ q:"eki", options:["えき","えぎ","えっき","えきい"], correct:"えき" },
+
+{ q:"kagaku", options:["かがく","かかく","ががく","かがっく"], correct:"かがく" },
+
+{ q:"kega", options:["けが","けか","げが","けっが"], correct:"けが" },
+
+{ q:"i", options:["い","ぃ","いー","いぃい"], correct:"い" },
+
+{ q:"o", options:["お","ぉ","おー","おお"], correct:"お" },
+
+{ q:"ii", options:["いい","いーい","いぃい","いっい"], correct:"いい" },
+
+];
+
+/* ========== helper: pick random 50 (or fewer if less than 50) ========== */
+
+function getRandom50(sourceArray) {
+
+  const copy = sourceArray.slice();
+
+  for (let i = copy.length - 1; i > 0; i--) {
+
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+
+  }
+
+  return copy.slice(0, Math.min(50, copy.length));
+
+}
+
+/* ========== quiz state ========== */
+
+let quiz = getRandom50(baseQuestions); // pick 50 random from master
+
+let idx = 0;
+
+let score = 0;
+
+/* ========== UI refs ========== */
+
+const qnumEl = document.getElementById('qnum');
+
+const romajiEl = document.getElementById('romaji');
+
+const choicesEl = document.getElementById('choices');
+
+const feedbackEl = document.getElementById('feedback');
+
+const nextBtn = document.getElementById('nextBtn');
+
+const restartBtn = document.getElementById('restartBtn');
+
+/* ========== render one question ========== */
+
+function renderQuestion() {
+
+  feedbackEl.textContent = "";
+
+  nextBtn.disabled = true;
+
+  nextBtn.style.display = "none";
+
+  restartBtn.style.display = "none";
+
+  if (idx >= quiz.length) {
+
+    showResults();
+
+    return;
+
+  }
+
+  const item = quiz[idx];
+
+  qnumEl.textContent = `Question ${idx + 1} / ${quiz.length}`;
+
+  romajiEl.textContent = item.q;
+
+  choicesEl.innerHTML = "";
+
+  // ensure options array has 4 unique items
+
+  const uniq = Array.from(new Set((item.options || []).slice(0,4)));
+
+  while (uniq.length < 4) uniq.push(item.correct + "ー");
+
+  // shuffle options
+
+  for (let i = uniq.length - 1; i > 0; i--) {
+
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [uniq[i], uniq[j]] = [uniq[j], uniq[i]];
+
+  }
+
+  uniq.forEach(opt => {
+
+    const btn = document.createElement('button');
+
+    btn.className = 'choice-btn';
+
+    btn.textContent = opt;
+
+    btn.type = 'button';
+
+    btn.addEventListener('click', () => handleChoice(btn, opt, item));
+
+    choicesEl.appendChild(btn);
+
+  });
+
+}
+
+/* ========== handle an answer click ========== */
+
+function handleChoice(button, chosen, item) {
+
+  // disable all
+
+  const buttons = Array.from(document.querySelectorAll('.choice-btn'));
+
+  buttons.forEach(b => b.disabled = true);
+
+  // mark correct and chosen
+
+  buttons.forEach(b => {
+
+    if (b.textContent === item.correct) b.classList.add('correct');
+
+    if (b === button && b.textContent !== item.correct) b.classList.add('wrong');
+
+  });
+
+  if (chosen === item.correct) {
+
+    feedbackEl.textContent = "✅ Correct!";
+
+    score++;
+
+  } else {
+
+    feedbackEl.textContent = `❌ Wrong — correct: ${item.correct}`;
+
+  }
+
+  nextBtn.style.display = "inline-block";
+
+  nextBtn.disabled = false;
+
+}
+
+/* ========== next button ========== */
+
+nextBtn.addEventListener('click', () => {
+
+  idx++;
+
+  renderQuestion();
+
+});
+
+/* ========== show final results ========== */
+
+
+function showResults() {
+
+  qnumEl.textContent = "";
+
+  romajiEl.textContent = "Quiz complete!";
+
+  choicesEl.innerHTML = "";
+
+  nextBtn.style.display = "none";
+
+  restartBtn.style.display = "inline-block";
+
+  let gifUrl = "";
+
+  // score ranges:
+
+  // 0–14  → gif1
+
+  // 15–44 → gif2
+
+  // 45–50 → gif3
+
+  if (score < 15) {
+
+    gifUrl = "https://raw.githubusercontent.com/k58835032-notbot/hiragana-lesson-3-reading/main/sad%20(1).gif";
+
+  } else if (score <= 44) {
+
+    gifUrl = "https://raw.githubusercontent.com/k58835032-notbot/hiragana-lesson-3-reading/9dfe4e3c0835a43c673a94f82005d873295632c4/peach-goma.gif";
+
+  } else {
+
+    gifUrl = "https://raw.githubusercontent.com/k58835032-notbot/hiragana-lesson-3-reading/aa252ee2e91e02c223f7e9151aa64f9abe7700e4/peach-goma-peach-and-goma.gif";
+
+  }
+
+  feedbackEl.innerHTML = `
+
+    <div style="font-size:1.4rem; margin-bottom:10px;">
+
+      Your score: ${score} / ${quiz.length}
+
+    </div>
+
+    <img src="${gifUrl}" style="max-width:220px; display:block; margin:auto; border-radius:12px;">
+
+  `;
+
+}
+
+
+
+/* ========== restart logic ========== */
+
+restartBtn.addEventListener('click', () => {
+
+  quiz = getRandom50(baseQuestions);
+
+  idx = 0;
+
+  score = 0;
+
+  renderQuestion();
+
+});
+
+/* ========== start ========== */
+
+renderQuestion();
+
+</script>
+
+</body>
+
+</html>
+    
+  </body>
+  
+</html>
